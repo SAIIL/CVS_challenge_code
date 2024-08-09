@@ -1,5 +1,5 @@
 """Define metrics for the CVS challenge. See compute_overall_metrics for specific types of metrics."""
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 from sklearn.metrics import (accuracy_score, average_precision_score,
@@ -38,6 +38,35 @@ def compute_overall_metrics(
 
     return metrics
 
+def compute_aggregate_dataset_metrics(dataset_result_dictionary: List):
+    """Compute the metrics for the entire dataset.
+
+    Args:
+        dataset_result_dictionary (List): A list of dictionaries with the keys as the dataset names and the values as the results for that dataset.
+
+    Returns:
+        Dict: A dictionary with the keys as the dataset names and the values as the metrics for that dataset.
+    """
+
+    overall_raw_labels = None
+    overall_outputs = None
+    overall_confidence_aware_labels = None
+    for dataset in dataset_result_dictionary:
+        if overall_raw_labels is None:
+            overall_raw_labels = dataset["overall_raw_labels"]
+            overall_confidence_aware_labels = dataset["overall_confidence_aware_labels"]
+            overall_outputs = dataset["overall_outputs"]
+        else:
+            overall_raw_labels = np.concatenate((overall_raw_labels, dataset["overall_raw_labels"]))
+            overall_confidence_aware_labels = np.concatenate((overall_confidence_aware_labels, dataset["overall_confidence_aware_labels"]))
+            overall_outputs = np.concatenate((overall_outputs, dataset["overall_outputs"]))
+
+    overall_metrics = compute_overall_metrics(overall_raw_labels, overall_confidence_aware_labels, overall_outputs)
+    overall_metrics['overall_raw_labels']=overall_raw_labels
+    overall_metrics['overall_outputs']=overall_outputs
+    overall_metrics['overall_confidence_aware_labels']=overall_confidence_aware_labels
+    return overall_metrics
+    
 if __name__ == "__main__":
     # Test the metrics
     overall_labels = np.array([[0, 1, 0], [1, 0, 0],  [0, 0, 1]]).transpose()
