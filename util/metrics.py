@@ -3,7 +3,7 @@ from typing import Dict
 
 import numpy as np
 from sklearn.metrics import (accuracy_score, average_precision_score,
-                             brier_score_loss, f1_score)
+                             f1_score)
 
 
 def compute_overall_metrics(
@@ -32,7 +32,21 @@ def compute_overall_metrics(
     for i, key in enumerate(["c1", "c2", "c3"]):
         confidences = overall_confidences[:,i]
         ca_labels = confidence_aware_labels[:,i]
-        brier_score = brier_score_loss(y_true = ca_labels>0, y_prob=confidences, pos_label=1)
+        # Use the original formula from the paper, as it works for continuous values
+        brier_score = float(np.average((np.array(ca_labels)-np.array(confidences))**2))
         metrics["brier_score"][key] = brier_score
 
     return metrics
+
+if __name__ == "__main__":
+    # Test the metrics
+    overall_labels = np.array([[0, 1, 0], [1, 0, 0],  [0, 0, 1]]).transpose()
+    confidence_aware_labels = np.array([[0.2, 0.9, 0.2], [0.8, 0.0, 0.2],  [0.2, 0.0, 0.9]]).transpose()
+    ## Perfectly calibrated confidences:
+    # overall_confidences = np.array([[0.2, 0.9, 0.2], [0.8, 0.0, 0.2],  [0.2, 0.0, 0.9]]).transpose()
+    ## Poorly calibrated confidences for c2, c3
+    overall_confidences = np.array([[0.2, 0.9, 0.2], [0.50001, 0.4999, 0.4999],  [0.0, 0.0, 1.0]]).transpose()
+    metrics = compute_overall_metrics(overall_labels=overall_labels, confidence_aware_labels=confidence_aware_labels,
+                                overall_confidences=overall_confidences)
+    print(metrics)
+
