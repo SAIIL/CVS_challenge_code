@@ -1,0 +1,1 @@
+Reading an example resource in the content folder used by model
