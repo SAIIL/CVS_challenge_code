@@ -46,7 +46,7 @@ def run():
     # In this block, you should be able to control everything from your input pipeline (loading frames)
     # until the final output is generated.
 
-    # Note carefully whether the input functions below load the frames as you expect them
+    # Note carefully whether the input functions below loads the frames as you expect them.
     # e.g. RGB/BGR, 0-1/0-255 format.
     # Feel free to use a custom input function you feel comfartable with.
 
