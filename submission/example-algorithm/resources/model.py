@@ -45,9 +45,8 @@ def my_model(*, model_inputs):
     ##############
     # Your Model 
     ##############
+    n,_,_,_ = np.shape(model_inputs)
 
-    predictions = {
-                   "overall_outputs": np.random.rand(90,3).tolist(),
-                    }
+    predictions = np.random.rand(n,3).tolist()
 
     return predictions

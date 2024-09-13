@@ -37,21 +37,29 @@ def run():
     # NOTE Only one 1 fps mp4 will be run at a time per container. 
     # Therfore only one mp4 will be available in the input_path location
     
-    input_frames = load_video_file_as_array(location=INPUT_PATH / "laparoscopic-video.mp4") 
-
     # The simplest way to adapt this example to your code would be to edit the block below
     # to integrate your model call
 
     ##########################
     # Begin Model Call
     ##########################
+    # In this block, you should be able to control everything from your input pipeline (loading frames)
+    # until the final output is generated.
 
-    # Process the inputs anyway you like.
+    # Note carefully whether the input functions below load the frames as you expect them
+    # e.g. RGB/BGR, 0-1/0-255 format.
+    # Feel free to use a custom input function you feel comfartable with.
+
+    input_frames = load_video_file_as_array(location=INPUT_PATH / "laparoscopic-video.mp4")
 
     _show_torch_cuda_info()
 
     # For now, let us set make bogus predictions: 1 video 3 frames with 3 criteria predictions each
-    output_cvs_criteria = my_model(model_inputs=input_frames)
+    model_predictions = my_model(model_inputs=input_frames)
+
+    output_cvs_criteria = {
+        "overall_outputs": model_predictions
+    }
 
     ##########################
     # End of Model Call
@@ -60,7 +68,7 @@ def run():
     # is of shape 90x3, corresponding to probability values for each of the 90 frames
     # between 0 and 1
 
-    assert type(output_cvs_criteria) is dict, "Error: Your output_cvs_criteria should be a dictionary"
+    assert isinstance(output_cvs_criteria, dict), "Error: Your output_cvs_criteria should be a dictionary"
     assert "overall_outputs" in output_cvs_criteria.keys(), "Error: Your overall_outputs should be a key in the dictionary"
     assert np.shape(output_cvs_criteria["overall_outputs"]) == (90,3), "Error: You should be predicting 90 (frames) x 3 (criteria) probaility values in this run"
     assert check_elements_between_0_and_1(output_cvs_criteria["overall_outputs"]), "Error: Probability values should be between 0 and 1"
@@ -160,7 +168,8 @@ def load_video_file_as_array(*, location):
             break
         # Extract subsets every frame_interval frame and append the frame to the frames list
         if frame_count % frame_interval == 0:
-            frames.append(frame)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frames.append(frame_rgb)
             extracted_count += 1
 
         frame_count += 1
@@ -217,7 +226,7 @@ def extract_frames_as_png(*, location):
 
     # create output folder if not existed
     extracted_frames_path = TMP_PATH / "extracted_frames"
-    extracted_frames_path.mkdir(parents=True, exist_ok=True)  
+    extracted_frames_path.mkdir(parents=True, exist_ok=True)
     frame_count = 0
     extracted_count = 0
 
@@ -228,9 +237,10 @@ def extract_frames_as_png(*, location):
 
         # extract subsets every frame_interval frame
         if frame_count % frame_interval == 0:
-            cv2.imwrite(extracted_frames_path / f"frame_{extracted_count:04d}.png", frame)
+            file_path = str(extracted_frames_path / f"frame_{extracted_count:04d}.png")
+            cv2.imwrite(file_path, frame)
             print(f"Extracted frame {extracted_count:04d}")
-            extracted_count += 1   
+            extracted_count += 1
         frame_count += 1
 
     video.release()
